@@ -4,6 +4,7 @@ import co.com.emssanar.tesoreria.service.AdminCrudService;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin")
+@CrossOrigin (originPatterns = "*")
 public class AdminController {
 
     private final AdminCrudService adminCrudService;

@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from '../app.config';
 
 export interface ReportFilters {
   nit: string;
@@ -19,9 +20,10 @@ type ReportSection = 'recobros' | 'cartera' | 'tesoreria' | 'impuestos' | 'circu
   providedIn: 'root'
 })
 export class ReportApiService {
-  private readonly baseUrl = 'http://localhost:9299/api/reportes';
-
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    @Inject(API_BASE_URL) private readonly baseUrl: string
+  ) { }
 
   fetchReport(section: ReportSection, type: string, filters: ReportFilters) {
     const route = this.resolveRoute(section, type);
@@ -75,7 +77,10 @@ export class ReportApiService {
     return `${today}_${section.toUpperCase()}_${type.toUpperCase()}.csv`;
   }
 
-  private resolveRoute(section: ReportSection, type: string): string {
+  private resolveRoute(section: ReportSection | string, type: string): string {
+    const cleanSection = (section || '').toString().replace(/^\/?admin\//, '').replace(/^\//, '').trim().toLowerCase();
+    const cleanType = (type || '').toString().replace(/^\//, '').trim().toLowerCase();
+
     const map: Record<string, string> = {
       'recobros/nit-cuenta': '/recobros/cuenta-cobro',
       'recobros/nit-factura': '/recobros/factura',
@@ -95,7 +100,7 @@ export class ReportApiService {
       'circular030/cruce': '/cruce'
     };
 
-    const key = `${section}/${type}`;
+    const key = `${cleanSection}/${cleanType}`;
     const route = map[key];
     if (!route) {
       throw new Error(`Ruta no soportada: ${key}`);

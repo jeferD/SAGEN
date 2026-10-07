@@ -37,7 +37,7 @@ public class ReportExportService {
 
     public DownloadResponse descargarTesoreriaRadicados(String txtidrad) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_global.exportar_pagos_lista_de_radicados(?)",
+                "SELECT * FROM tesoreria_global.    (?)",
                 today("PAGOS_POR_RADICADOS"),
                 arrayLiteral(txtidrad));
     }

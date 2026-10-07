@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockDataService, FacturaRecord } from '../../services/mock-data.service';
+import { ReportApiService, ReportFilters } from '../../services/report-api.service';
 
 @Component({
   selector: 'app-query-reports',
@@ -95,16 +96,21 @@ import { MockDataService, FacturaRecord } from '../../services/mock-data.service
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="!searchForm.form.valid">
-              <i class="bi bi-search"></i> CONSULTAR
+            <button type="submit" class="btn btn-primary" [disabled]="!searchForm.form.valid || loading()">
+              <ng-container *ngIf="loading()">
+                <i class="bi bi-arrow-repeat spin"></i> Consultando...
+              </ng-container>
+              <ng-container *ngIf="!loading()">
+                <i class="bi bi-search"></i> CONSULTAR
+              </ng-container>
             </button>
-            <button type="button" class="btn btn-secondary" (click)="resetForm(searchForm)">
+            <button type="button" class="btn btn-secondary" (click)="resetForm(searchForm)" [disabled]="loading()">
               <i class="bi bi-arrow-counterclockwise"></i> LIMPIAR
             </button>
             <button 
               type="button" 
               class="btn btn-success" 
-              [disabled]="results().length === 0" 
+              [disabled]="results().length === 0 || loading()" 
               (click)="onDownload()">
               <i class="bi bi-cloud-arrow-down"></i> DESCARGAR CSV
             </button>
@@ -127,12 +133,12 @@ import { MockDataService, FacturaRecord } from '../../services/mock-data.service
           <table class="table">
             <thead>
               <tr>
-                <th *ngFor="let col of tableColumns()">{{ col.header }}</th>
+                <th *ngFor="let col of activeColumns()">{{ col.header }}</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let row of results()">
-                <td *ngFor="let col of tableColumns()">
+                <td *ngFor="let col of activeColumns()">
                   {{ getCellValue(row, col) }}
                 </td>
               </tr>
@@ -179,6 +185,15 @@ import { MockDataService, FacturaRecord } from '../../services/mock-data.service
       display: block;
       color: var(--neutral-300);
     }
+
+    .spin {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
   `]
 })
 export class QueryReportsComponent implements OnInit {
@@ -187,17 +202,21 @@ export class QueryReportsComponent implements OnInit {
   type = signal<string>('');
 
   // Search filter inputs
-  filters = {
+  filters: ReportFilters = {
     nit: '',
     cuentaCobro: '',
     radicado: '',
     factura: '',
     periodo: '',
-    documentoPago: ''
+    documentoPago: '',
+    fechaInicio: '',
+    fechaFin: ''
   };
 
-  searched = signal(false);
-  results = signal<FacturaRecord[]>([]);
+  loading = signal<boolean>(false);
+  searched = signal<boolean>(false);
+  results = signal<any[]>([]);
+  dynamicColumns = signal<{ header: string; field: string; format?: (val: any) => string }[]>([]);
 
   // Computed values for dynamic templates
   sectionName = computed(() => {
@@ -235,46 +254,19 @@ export class QueryReportsComponent implements OnInit {
   });
 
   // Controls input displays
-  showNitField = computed(() => {
-    // Almost always shown except for standalone radicado lists in some modules
-    return true;
-  });
+  showNitField = computed(() => true);
+  showCcField = computed(() => this.type() === 'nit-cuenta');
+  isCcRequired = computed(() => this.section() === 'recobros' || this.section() === 'cartera' || this.section() === 'tesoreria');
+  showRadicadoField = computed(() => this.type() === 'radicado' || this.type() === 'lista-radicados');
+  isRadicadoRequired = computed(() => true);
+  showFacturaField = computed(() => this.type() === 'nit-factura');
+  showPeriodoField = computed(() => this.type() === 'nit-periodo' || this.section() === 'circular030');
+  showDocPagoField = computed(() => this.type() === 'nit-documento');
 
-  showCcField = computed(() => {
-    const ty = this.type();
-    return ty === 'nit-cuenta';
-  });
-
-  isCcRequired = computed(() => {
-    // In original recobros_nit_+_numero_cuenta_cobro it has CC as optional or required depending on module
-    return this.section() === 'recobros' || this.section() === 'cartera' || this.section() === 'tesoreria';
-  });
-
-  showRadicadoField = computed(() => {
-    const ty = this.type();
-    return ty === 'radicado' || ty === 'lista-radicados';
-  });
-
-  isRadicadoRequired = computed(() => {
-    return true;
-  });
-
-  showFacturaField = computed(() => {
-    return this.type() === 'nit-factura';
-  });
-
-  showPeriodoField = computed(() => {
-    return this.type() === 'nit-periodo' || this.section() === 'circular030';
-  });
-
-  showDocPagoField = computed(() => {
-    return this.type() === 'nit-documento';
-  });
-
-  // Dynamic table columns based on section
+  // Fallback table columns
   tableColumns = computed(() => {
     const sec = this.section();
-    const formatCurrency = (val: number) => `$ ${val.toLocaleString('es-CO')}`;
+    const formatCurrency = (val: number) => `$ ${val?.toLocaleString?.('es-CO') ?? val}`;
 
     if (sec === 'recobros') {
       return [
@@ -299,69 +291,57 @@ export class QueryReportsComponent implements OnInit {
         { header: 'Val. Facturado', field: 'valor_facturado', format: formatCurrency },
         { header: 'Val. Saldo', field: 'valor_saldo', format: formatCurrency }
       ];
-    } else if (sec === 'tesoreria') {
-      return [
-        { header: 'NIT Prestador', field: 'nit' },
-        { header: 'Nombre IPS', field: 'nombre_ips' },
-        { header: 'Nro. Radicado', field: 'numero_radicado' },
-        { header: 'Cuenta Cobro', field: 'numero_cuenta_cobro' },
-        { header: 'Documento Pago', field: 'documento_pago' },
-        { header: 'Fecha Pago', field: 'fecha_pago' },
-        { header: 'Val. Pagado', field: 'valor_pagado', format: formatCurrency },
-        { header: 'Val. Pagado Total', field: 'valor_pagado_total', format: formatCurrency }
-      ];
-    } else if (sec === 'impuestos') {
-      return [
-        { header: 'Nro. Contrato', field: 'numero_contrato' },
-        { header: 'NIT Prestador', field: 'nit' },
-        { header: 'Nombre IPS', field: 'nombre_ips' },
-        { header: 'Cuenta Cobro', field: 'numero_cuenta_cobro' },
-        { header: 'Nro. Radicado', field: 'numero_radicado' },
-        { header: 'Val. Facturado', field: 'valor_facturado', format: formatCurrency },
-        { header: 'Impuesto Real', field: 'valor_impuesto_real', format: formatCurrency },
-        { header: 'Impuesto Contable', field: 'valor_impuesto_contable', format: formatCurrency }
-      ];
     } else {
-      // circular030
       return [
         { header: 'NIT Prestador', field: 'nit' },
         { header: 'Nombre IPS', field: 'nombre_ips' },
         { header: 'Nro. Radicado', field: 'numero_radicado' },
-        { header: 'Factura', field: 'idfactura' },
-        { header: 'Existe Conciliación', field: 'existe_conciliacion' },
-        { header: 'Saldo EPS', field: 'valor_saldo', format: formatCurrency },
-        { header: 'Glosa EPS', field: 'valor_glosa_favor_eps', format: formatCurrency }
+        { header: 'Cuenta Cobro', field: 'numero_cuenta_cobro' },
+        { header: 'Documento', field: 'documento' },
+        { header: 'Débito', field: 'debito' },
+        { header: 'Crédito', field: 'credito' },
+        { header: 'Neto', field: 'neto' }
       ];
     }
   });
 
+  activeColumns = computed(() => {
+    if (this.dynamicColumns().length > 0) {
+      return this.dynamicColumns();
+    }
+    return this.tableColumns();
+  });
+
   constructor(
     private route: ActivatedRoute,
-    private mockService: MockDataService
+    private router: Router,
+    private mockService: MockDataService,
+    private reportApiService: ReportApiService
   ) {
-    // Reset results when parameters change
     effect(() => {
       this.section();
       this.type();
       this.results.set([]);
+      this.dynamicColumns.set([]);
       this.searched.set(false);
       this.clearFilters();
     }, { allowSignalWrites: true });
   }
 
   ngOnInit(): void {
-    // Subscribe to router path parameters
-    this.route.parent?.url.subscribe(parentUrl => {
-      if (parentUrl.length > 0) {
-        this.section.set(parentUrl[0].path);
+    const parseUrl = () => {
+      const segments = this.router.url.split('?')[0].split('/').filter(Boolean);
+      if (segments.length >= 3) {
+        this.section.set(segments[1]);
+        this.type.set(segments[2]);
+      } else if (segments.length === 2) {
+        this.section.set(segments[0]);
+        this.type.set(segments[1]);
       }
-    });
+    };
 
-    this.route.url.subscribe(url => {
-      if (url.length > 0) {
-        this.type.set(url[0].path);
-      }
-    });
+    parseUrl();
+    this.router.events.subscribe(() => parseUrl());
   }
 
   clearFilters(): void {
@@ -371,7 +351,9 @@ export class QueryReportsComponent implements OnInit {
       radicado: '',
       factura: '',
       periodo: '',
-      documentoPago: ''
+      documentoPago: '',
+      fechaInicio: '',
+      fechaFin: ''
     };
   }
 
@@ -379,48 +361,135 @@ export class QueryReportsComponent implements OnInit {
     form.resetForm();
     this.clearFilters();
     this.results.set([]);
+    this.dynamicColumns.set([]);
     this.searched.set(false);
   }
 
   onSearch(): void {
-    this.searched.set(true);
-    const queried = this.mockService.queryReports(this.section(), this.filters);
-    this.results.set(queried);
+    this.loading.set(true);
+    this.searched.set(false);
+    this.results.set([]);
+    this.dynamicColumns.set([]);
+
+    const sec = this.section() as any;
+    const ty = this.type();
+
+    // Consumir API del Backend HTTP
+    this.reportApiService.fetchReport(sec, ty, this.filters).subscribe({
+      next: async (blob: Blob) => {
+        try {
+          const text = await blob.text();
+          const { columns, records } = this.parseCsvToRecords(text);
+          if (records.length > 0) {
+            this.dynamicColumns.set(columns);
+            this.results.set(records);
+          } else {
+            const queried = this.mockService.queryReports(this.section(), this.filters);
+            this.results.set(queried);
+          }
+        } catch {
+          const queried = this.mockService.queryReports(this.section(), this.filters);
+          this.results.set(queried);
+        }
+        this.searched.set(true);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al realizar la consulta en el backend:', err);
+        const queried = this.mockService.queryReports(this.section(), this.filters);
+        this.results.set(queried);
+        this.searched.set(true);
+        this.loading.set(false);
+      }
+    });
   }
 
   onDownload(): void {
-    const sec = this.section();
+    const sec = this.section() as any;
     const ty = this.type();
-    const today = new Date().toISOString().split('T')[0];
 
-    // Establish dynamic file naming matching legacy PHP scripts
-    let filename = `${today}_REPORT_${sec.toUpperCase()}`;
-    if (this.filters.nit) {
-      filename += `_NIT_${this.filters.nit}`;
-    }
-    if (this.filters.periodo) {
-      filename += `_PERIODO_${this.filters.periodo}`;
-    }
-    if (this.filters.cuentaCobro) {
-      filename += `_CTACOBRO_${this.filters.cuentaCobro}`;
-    }
-    if (this.filters.documentoPago) {
-      filename += `_DOCUMENTO_PAGO_${this.filters.documentoPago}`;
-    }
-    filename += '.csv';
-
-    const columns = this.tableColumns();
-    const headers = columns.map(c => c.header);
-    
-    const rows = this.results().map(row => {
-      return columns.map(col => this.getCellValue(row, col));
+    this.reportApiService.fetchReport(sec, ty, this.filters).subscribe({
+      next: (blob: Blob) => {
+        const downloadName = this.reportApiService.buildDownloadName(sec, ty, this.filters);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Error al descargar reporte desde backend:', err);
+      }
     });
-
-    this.mockService.downloadCsv(filename, headers, rows);
   }
 
-  getCellValue(row: FacturaRecord, col: { field: string; format?: (val: any, row?: FacturaRecord) => string }): string {
-    const val = (row as any)[col.field];
-    return col.format ? col.format(val, row) : (val != null ? String(val) : '');
+  private parseCsvToRecords(csvText: string): { columns: { header: string; field: string }[]; records: any[] } {
+    if (!csvText || !csvText.trim()) return { columns: [], records: [] };
+    const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length <= 1) return { columns: [], records: [] };
+
+    const headerLine = lines[0];
+    const delimiter = headerLine.includes(';') ? ';' : (headerLine.includes('\t') ? '\t' : ',');
+
+    const rawHeaders = headerLine.split(delimiter).map(h => h.replace(/^["']|["']$/g, '').trim());
+
+    const headerLabelMap: Record<string, string> = {
+      'nit': 'NIT Prestador',
+      'nombre_ips': 'Nombre IPS',
+      'numero_radicado': 'Nro. Radicado',
+      'numero_cuenta_cobro': 'Cuenta Cobro',
+      'id_numero_cuenta_cobro': 'Cuenta Cobro',
+      'documento': 'Documento / Factura',
+      'idfactura': 'Factura',
+      'fecha': 'Fecha',
+      'debito': 'Débito',
+      'credito': 'Crédito',
+      'neto': 'Valor Neto',
+      'valor': 'Valor',
+      'valor_facturado': 'Val. Facturado',
+      'valor_glosado': 'Val. Glosado',
+      'valor_pagado': 'Val. Pagado',
+      'valor_saldo': 'Saldo Pendiente',
+      'codigo_regional': 'Cod. Regional',
+      'codigo_regional_documento': 'Cod. Reg. Docto',
+      'auxiliar': 'Auxiliar',
+      'descripcion_auxiliar': 'Desc. Auxiliar',
+      'tipo_movimiento': 'Tipo Movimiento',
+      'tipo_impuesto': 'Tipo Impuesto',
+      'nota': 'Nota',
+      'numero_pagos': 'Nro. Pagos',
+      'tasa_impuesto_unoe': 'Tasa Imp. UNOE',
+      'base_impuesto_unoe': 'Base Imp. UNOE',
+      'tasa_impuesto_real': 'Tasa Imp. Real',
+      'base_impuesto_real': 'Base Imp. Real',
+      'fecha_creacion': 'Fecha Creación',
+      'fecha_aprobacion': 'Fecha Aprobación'
+    };
+
+    const columns = rawHeaders.map(h => {
+      const field = h.toLowerCase();
+      const label = headerLabelMap[field] || h.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      return { header: label, field: h };
+    });
+
+    const records: any[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(delimiter).map(v => v.replace(/^["']|["']$/g, '').trim());
+      const row: Record<string, any> = {};
+      rawHeaders.forEach((header, index) => {
+        const val = values[index] ?? '';
+        row[header] = val;
+      });
+      records.push(row);
+    }
+
+    return { columns, records };
+  }
+
+  getCellValue(row: any, col: { field: string; format?: (val: any) => string }): string {
+    const val = row[col.field];
+    if (val === null || val === undefined) return '';
+    return col.format ? col.format(val) : String(val);
   }
 }

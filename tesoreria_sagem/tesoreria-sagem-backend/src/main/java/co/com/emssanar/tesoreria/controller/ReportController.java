@@ -18,7 +18,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestController
 @RequestMapping("/api/reportes")
-// @CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*")
 public class ReportController {
 
     private final ReportExportService reportExportService;
