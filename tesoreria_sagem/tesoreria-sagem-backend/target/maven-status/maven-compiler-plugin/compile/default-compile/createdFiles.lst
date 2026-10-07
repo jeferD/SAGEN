@@ -1,1 +1,6 @@
+co\com\emssanar\tesoreria\controller\AdminController.class
 co\com\emssanar\tesoreria\TesoreriaSagemBackendApplication.class
+co\com\emssanar\tesoreria\service\AdminCrudService.class
+co\com\emssanar\tesoreria\service\ReportExportService.class
+co\com\emssanar\tesoreria\service\ReportExportService$DownloadResponse.class
+co\com\emssanar\tesoreria\controller\ReportController.class

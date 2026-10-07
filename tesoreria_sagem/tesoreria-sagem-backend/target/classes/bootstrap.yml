@@ -5,5 +5,5 @@ spring:
     active: prod
   cloud:
     config:
-      uri: http://config-server:8888
+      uri: http://config-server:8081
       fail-fast: false
