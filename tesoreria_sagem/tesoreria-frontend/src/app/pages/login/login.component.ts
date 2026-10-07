@@ -310,16 +310,7 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {
-    if (this.authService.isAuthenticated()) {
-      const role = this.authService.userRole();
-      if (role === 1) {
-        this.router.navigate(['/admin/inicio']);
-      } else if (role === 2) {
-        this.router.navigate(['/pqrs/lista']);
-      }
-    }
-  }
+  ) {}
 
   useCredentials(role: 'admin' | 'pqrs'): void {
     this.username = role;

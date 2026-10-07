@@ -81,16 +81,6 @@ import { MockDataService, FacturaRecord } from '../../services/mock-data.service
               </select>
             </div>
 
-            <!-- Date Range Fields (Initial / Final Period) -->
-            <div class="form-group" *ngIf="showDateRangeFields()">
-              <label class="form-label">Periodo de pago inicial <span class="required">*</span></label>
-              <input type="date" class="form-control" name="txtfini" [(ngModel)]="filters.fechaInicio" required>
-            </div>
-            <div class="form-group" *ngIf="showDateRangeFields()">
-              <label class="form-label">Periodo de pago final <span class="required">*</span></label>
-              <input type="date" class="form-control" name="txtffin" [(ngModel)]="filters.fechaFin" required>
-            </div>
-
             <!-- Documento Pago Field -->
             <div class="form-group" *ngIf="showDocPagoField()">
               <label class="form-label">Documento de Pago <span class="required">*</span></label>
@@ -143,7 +133,7 @@ import { MockDataService, FacturaRecord } from '../../services/mock-data.service
             <tbody>
               <tr *ngFor="let row of results()">
                 <td *ngFor="let col of tableColumns()">
-                  {{ col.format ? col.format(getFieldValue(row, col.field)) : getFieldValue(row, col.field) }}
+                  {{ getCellValue(row, col) }}
                 </td>
               </tr>
             </tbody>
@@ -203,9 +193,7 @@ export class QueryReportsComponent implements OnInit {
     radicado: '',
     factura: '',
     periodo: '',
-    documentoPago: '',
-    fechaInicio: '',
-    fechaFin: ''
+    documentoPago: ''
   };
 
   searched = signal(false);
@@ -276,11 +264,7 @@ export class QueryReportsComponent implements OnInit {
   });
 
   showPeriodoField = computed(() => {
-    return this.section() === 'circular030';
-  });
-
-  showDateRangeFields = computed(() => {
-    return this.type() === 'nit-periodo';
+    return this.type() === 'nit-periodo' || this.section() === 'circular030';
   });
 
   showDocPagoField = computed(() => {
@@ -367,10 +351,15 @@ export class QueryReportsComponent implements OnInit {
 
   ngOnInit(): void {
     // Subscribe to router path parameters
+    this.route.parent?.url.subscribe(parentUrl => {
+      if (parentUrl.length > 0) {
+        this.section.set(parentUrl[0].path);
+      }
+    });
+
     this.route.url.subscribe(url => {
-      if (url.length > 1) {
-        this.section.set(url[0].path);
-        this.type.set(url[1].path);
+      if (url.length > 0) {
+        this.type.set(url[0].path);
       }
     });
   }
@@ -382,9 +371,7 @@ export class QueryReportsComponent implements OnInit {
       radicado: '',
       factura: '',
       periodo: '',
-      documentoPago: '',
-      fechaInicio: '',
-      fechaFin: ''
+      documentoPago: ''
     };
   }
 
@@ -420,28 +407,20 @@ export class QueryReportsComponent implements OnInit {
     if (this.filters.documentoPago) {
       filename += `_DOCUMENTO_PAGO_${this.filters.documentoPago}`;
     }
-    if (this.filters.fechaInicio) {
-      filename += `_FECHA_INI_${this.filters.fechaInicio}`;
-    }
-    if (this.filters.fechaFin) {
-      filename += `_FECHA_FIN_${this.filters.fechaFin}`;
-    }
     filename += '.csv';
 
     const columns = this.tableColumns();
     const headers = columns.map(c => c.header);
     
     const rows = this.results().map(row => {
-      return columns.map(col => {
-        const val = this.getFieldValue(row, col.field);
-        return col.format ? col.format(val) : val;
-      });
+      return columns.map(col => this.getCellValue(row, col));
     });
 
     this.mockService.downloadCsv(filename, headers, rows);
   }
 
-  getFieldValue(row: FacturaRecord, field: string): any {
-    return (row as any)[field];
+  getCellValue(row: FacturaRecord, col: { field: string; format?: (val: any, row?: FacturaRecord) => string }): string {
+    const val = (row as any)[col.field];
+    return col.format ? col.format(val, row) : (val != null ? String(val) : '');
   }
 }

@@ -170,10 +170,18 @@ export const routes: Routes = [
   // Root redirect
   {
     path: '',
-    redirectTo: 'login',
+    redirectTo: () => {
+      const authService = inject(AuthService);
+      const role = authService.userRole();
+      if (authService.isAuthenticated()) {
+        if (role === 1) return '/admin/inicio';
+        if (role === 2) return '/pqrs/lista';
+      }
+      return '/login';
+    },
     pathMatch: 'full'
   },
   
   // Wildcard fallback
-  { path: '**', redirectTo: 'login' }
+  { path: '**', redirectTo: '' }
 ];
