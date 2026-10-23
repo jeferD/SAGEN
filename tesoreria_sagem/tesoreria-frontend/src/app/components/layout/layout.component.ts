@@ -84,7 +84,7 @@ interface MenuItem {
           <div class="header-user" *ngIf="currentUser()">
             <div class="user-info">
               <span class="user-name">{{ currentUser()?.name }}</span>
-              <span class="user-role-tag">{{ currentUser()?.role === 1 ? 'Administrador' : 'Gestor PQRS' }}</span>
+              <span class="user-role-tag" [class.text-danger]="!hasTesoreriaRole()">{{ hasTesoreriaRole() ? 'Tesorería Autorizada' : 'Sin rol sagem-tesoreria' }}</span>
             </div>
             <button class="btn btn-secondary btn-sm logout-btn" (click)="onLogout()">
               <i class="bi bi-box-arrow-right"></i> Salir
@@ -94,7 +94,17 @@ interface MenuItem {
 
         <!-- Main Workspace -->
         <main class="content-body">
-          <router-outlet></router-outlet>
+          <router-outlet *ngIf="hasTesoreriaRole()"></router-outlet>
+          <div *ngIf="!hasTesoreriaRole()" class="no-role-warning animate-fade-in">
+            <div class="no-role-box">
+              <i class="bi bi-shield-x warning-icon"></i>
+              <h4>Módulo Restringido</h4>
+              <p>Para visualizar este módulo debe contar con el rol <strong>sagem-tesoreria</strong> en su token de acceso.</p>
+              <button class="btn btn-secondary btn-sm" (click)="onLogout()">
+                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+              </button>
+            </div>
+          </div>
         </main>
 
         <!-- Footer -->
@@ -320,15 +330,49 @@ interface MenuItem {
       gap: 6px;
     }
 
-    /* Footer */
-    .app-footer {
-      padding: 16px 24px;
-      border-top: 1px solid var(--neutral-200);
+    /* Restricted Role State */
+    .no-role-warning {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - var(--header-height) - 100px);
+      padding: 32px;
+    }
+
+    .no-role-box {
+      background: white;
+      border: 1px solid #fee2e2;
+      border-radius: 16px;
+      padding: 36px 32px;
       text-align: center;
-      font-size: 0.8rem;
-      color: var(--neutral-400);
-      background-color: white;
-      margin-top: auto;
+      max-width: 440px;
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.1);
+    }
+
+    .no-role-box .warning-icon {
+      font-size: 48px;
+      color: #ef4444;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+
+    .no-role-box h4 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .no-role-box p {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .text-danger {
+      color: #ef4444 !important;
+      font-weight: 600;
     }
   `]
 })
@@ -336,15 +380,16 @@ export class LayoutComponent {
   private authService = inject(AuthService);
   isCollapsed = signal(false);
   currentUser = this.authService.currentUser;
+  hasTesoreriaRole = this.authService.hasTesoreriaRole;
 
-  // Dynamically computed navigation menu based on active role
+  // Dynamically computed navigation menu: solo visible si cuenta con el rol sagem-tesoreria
   menuItems = computed<MenuItem[]>(() => {
-    const role = this.authService.userRole();
-    
-    if (role === 1) {
-      // Role 1: Tesoreria/Admin menu
-      return [
-        { label: 'Inicio', icon: 'bi bi-house-door', route: '/admin/inicio' },
+    if (!this.hasTesoreriaRole()) {
+      return []; // Si no tiene el rol sagem-tesoreria en el token, no visualiza nada
+    }
+
+    return [
+      { label: 'Inicio', icon: 'bi bi-house-door', route: '/admin/inicio' },
         { 
           label: 'Recobros', 
           icon: 'bi bi-shield-check', 
@@ -407,14 +452,6 @@ export class LayoutComponent {
           route: '/admin/emails'
         }
       ];
-    } else if (role === 2) {
-      // Role 2: PQRS menu
-      return [
-        { label: 'Listado PQRS', icon: 'bi bi-chat-square-text', route: '/pqrs/lista' },
-        { label: 'Registrar PQRS', icon: 'bi bi-plus-circle', route: '/pqrs/crear' }
-      ];
-    }
-    return [];
   });
 
   constructor() {}

@@ -1,1 +1,31 @@
-<router-outlet></router-outlet>
+@if (keycloakService.initError()) {
+  <div class="auth-error-screen">
+    <div class="auth-error-card">
+      <div class="error-badge">⚠️ Error de Autenticación</div>
+      <h2 class="error-title">No se pudo inicializar la sesión corporativa</h2>
+      <p class="error-detail">{{ keycloakService.initError() }}</p>
+
+      <div class="error-instructions">
+        <h3>Diagnóstico y Solución:</h3>
+        <p>El portal intentó conectarse con Keycloak en <code>https://auth.emssanareps.co:8443</code>, pero el navegador bloqueó la solicitud.</p>
+        <ol>
+          <li>
+            <strong>Verificar Web Origins (CORS) en Keycloak:</strong>
+            En la consola de administración de Keycloak (Realm <code>sagas</code> &rarr; Clients &rarr; <code>gestor-mesa-ayuda</code>):
+            Asegúrese de que el campo <strong>Web Origins</strong> tenga <code>+</code> o incluya explícitamente <code>https://sagas.emssanareps.co:8464</code>.
+          </li>
+          <li>
+            <strong>Valid Redirect URIs:</strong>
+            Debe contener <code>https://sagas.emssanareps.co:8464/*</code>.
+          </li>
+        </ol>
+      </div>
+
+      <div class="error-actions">
+        <button class="btn-primary" (click)="retryLogin()">Reintentar Conexión</button>
+      </div>
+    </div>
+  </div>
+} @else {
+  <router-outlet></router-outlet>
+}

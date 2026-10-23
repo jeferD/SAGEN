@@ -2,16 +2,37 @@ import { Routes } from '@angular/router';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
+import { KeycloakService } from './services/keycloak.service';
 
 // Functional Guards
 export const authGuard = () => {
   const authService = inject(AuthService);
-  const router = inject(Router);
+  const keycloakService = inject(KeycloakService);
 
   if (authService.isAuthenticated()) {
     return true;
   }
-  return router.createUrlTree(['/login']);
+  
+  // Redirigir al portal SSO corporativo solo si no ocurrió un fallo crítico previo
+  if (!keycloakService.initError()) {
+    authService.loginWithKeycloak();
+  }
+  return false;
+};
+
+export const tesoreriaRoleGuard = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (!authService.isAuthenticated()) {
+    return false;
+  }
+
+  if (authService.hasTesoreriaRole()) {
+    return true;
+  }
+
+  return router.createUrlTree(['/acceso-denegado']);
 };
 
 export const roleGuard = (allowedRole: number) => {
@@ -30,21 +51,32 @@ export const roleGuard = (allowedRole: number) => {
     } else if (role === 2) {
       return router.createUrlTree(['/pqrs/lista']);
     }
-    return router.createUrlTree(['/login']);
+    authService.loginWithKeycloak();
+    return false;
   };
 };
 
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent)
+    redirectTo: () => {
+      const authService = inject(AuthService);
+      if (authService.isAuthenticated() && !authService.hasTesoreriaRole()) {
+        return '/acceso-denegado';
+      }
+      return '/admin/inicio';
+    }
+  },
+  {
+    path: 'acceso-denegado',
+    loadComponent: () => import('./pages/acceso-denegado/acceso-denegado.component').then(m => m.AccesoDenegadoComponent)
   },
   
   // Admin Portal (Tesoreria - Role 1)
   {
     path: 'admin',
     loadComponent: () => import('./components/layout/layout.component').then(m => m.LayoutComponent),
-    canActivate: [authGuard, roleGuard(1)],
+    canActivate: [authGuard, tesoreriaRoleGuard],
     children: [
       {
         path: 'inicio',
@@ -172,12 +204,10 @@ export const routes: Routes = [
     path: '',
     redirectTo: () => {
       const authService = inject(AuthService);
-      const role = authService.userRole();
-      if (authService.isAuthenticated()) {
-        if (role === 1) return '/admin/inicio';
-        if (role === 2) return '/pqrs/lista';
+      if (authService.isAuthenticated() && !authService.hasTesoreriaRole()) {
+        return '/acceso-denegado';
       }
-      return '/login';
+      return '/admin/inicio';
     },
     pathMatch: 'full'
   },

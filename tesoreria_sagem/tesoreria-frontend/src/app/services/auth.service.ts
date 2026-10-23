@@ -1,10 +1,13 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { KeycloakService } from './keycloak.service';
 
 export interface UserSession {
   username: string;
   name: string;
-  role: number; // 1 = Tesoreria Admin, 2 = PQRS Gestor
+  email?: string;
+  role: number; // 1 = Tesoreria Admin, 2 = PQRS Gestor, 0 = Sin acceso
+  roles?: string[];
   empId?: string;
   noId?: string;
 }
@@ -14,7 +17,9 @@ export interface UserSession {
 })
 export class AuthService {
   private readonly SESSION_KEY = 'sagem_user_session';
-  
+  private router = inject(Router);
+  private keycloakService = inject(KeycloakService);
+
   // Reactive session state using signals
   private sessionState = signal<UserSession | null>(this.loadSessionFromStorage());
 
@@ -22,7 +27,23 @@ export class AuthService {
   public readonly isAuthenticated = computed(() => this.sessionState() !== null);
   public readonly userRole = computed(() => this.sessionState()?.role ?? null);
 
-  constructor(private router: Router) {}
+  /**
+   * Valida si el usuario actual cuenta específicamente con el rol 'sagem-tesoreria'
+   */
+  public readonly hasTesoreriaRole = computed(() => {
+    if (this.keycloakService.isLoggedIn()) {
+      return this.keycloakService.hasRole('sagem-tesoreria');
+    }
+    const session = this.sessionState();
+    if (!session) return false;
+    return session.roles?.some(r => r.trim().toLowerCase() === 'sagem-tesoreria') ?? false;
+  });
+
+  constructor() {
+    if (this.keycloakService.isLoggedIn()) {
+      this.syncFromKeycloak();
+    }
+  }
 
   private loadSessionFromStorage(): UserSession | null {
     try {
@@ -33,10 +54,72 @@ export class AuthService {
     }
   }
 
+  /**
+   * Sincroniza la sesión del usuario a partir del token y perfil de Keycloak
+   */
+  public syncFromKeycloak(): boolean {
+    if (!this.keycloakService.isLoggedIn()) {
+      return false;
+    }
+
+    const tokenParsed: any = this.keycloakService.getTokenParsed();
+    const profile = this.keycloakService.userProfile();
+    const roles = this.keycloakService.getUserRoles();
+
+    // Extraer nombres y atributos de Emssanar
+    const username = tokenParsed?.preferred_username || profile?.username || 'usuario';
+    const fullName = tokenParsed?.name || 
+      `${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || 
+      tokenParsed?.given_name || 
+      username;
+
+    const email = tokenParsed?.email || profile?.email || '';
+    const noId = tokenParsed?.numero_identificacion || 
+                 tokenParsed?.cedula || 
+                 tokenParsed?.nit || 
+                 tokenParsed?.sub || '';
+
+    // Validar rol estricto: para visualizar este módulo DEBE tener el rol 'sagem-tesoreria'
+    const hasSagemTesoreria = this.keycloakService.hasRole('sagem-tesoreria');
+    
+    // Si no tiene sagem-tesoreria, role = 0 (sin acceso al módulo)
+    let role = 0;
+    if (hasSagemTesoreria) {
+      role = 1; // Acceso concedido al módulo de Tesorería SAGEM
+    }
+
+    const session: UserSession = {
+      username,
+      name: fullName,
+      email,
+      role,
+      roles,
+      noId,
+      empId: tokenParsed?.empId || ''
+    };
+
+    this.sessionState.set(session);
+    localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
+    return true;
+  }
+
+  public hasRole(roleName: string): boolean {
+    if (this.keycloakService.isLoggedIn()) {
+      return this.keycloakService.hasRole(roleName);
+    }
+    const session = this.sessionState();
+    if (!session) return false;
+    return session.roles?.some(r => r.trim().toLowerCase() === roleName.trim().toLowerCase()) ?? false;
+  }
+
+  public loginWithKeycloak(): Promise<void> {
+    return this.keycloakService.login();
+  }
+
   public login(user: string, pass: string): boolean {
     const username = user.trim().toLowerCase();
     
-    // Simulate user accounts based on role mappings in conexion.php
+    // Simulación de cuentas para pruebas locales
     let session: UserSession | null = null;
     
     if (username === 'admin' && pass === '123456') {
@@ -44,6 +127,7 @@ export class AuthService {
         username: 'admin',
         name: 'Administrador de Tesorería',
         role: 1,
+        roles: ['sagem-tesoreria'], // Incluye el rol requerido
         empId: 'EMP001',
         noId: '101010'
       };
@@ -51,7 +135,8 @@ export class AuthService {
       session = {
         username: 'pqrs',
         name: 'Gestor de PQRS',
-        role: 2,
+        role: 0,
+        roles: ['sagem-pqrs'], // No cuenta con sagem-tesoreria
         empId: 'EMP002',
         noId: '202020'
       };
@@ -69,11 +154,14 @@ export class AuthService {
   public logout(): void {
     this.sessionState.set(null);
     localStorage.removeItem(this.SESSION_KEY);
-    this.router.navigate(['/login']);
+    if (this.keycloakService.isLoggedIn()) {
+      this.keycloakService.logout({ redirectUri: window.location.origin });
+    } else {
+      this.router.navigate(['/login']);
+    }
   }
 
   public recuperarClave(noId: string): string | null {
-    // Simulates registros_db/clases/conexion.php's recuperar method
     if (noId === '101010') {
       return 'bryanacosta@emssanar.org.co';
     } else if (noId === '202020') {
