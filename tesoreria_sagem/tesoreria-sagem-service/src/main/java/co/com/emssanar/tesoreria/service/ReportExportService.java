@@ -43,10 +43,12 @@ public class ReportExportService {
     }
 
     public DownloadResponse descargarTesoreriaNitPeriodo(String nit, String fini, String ffin) {
+        String effectiveFini = defaultFini(fini);
+        String effectiveFfin = defaultFfin(ffin);
         return exportFromFunction(
                 "SELECT * FROM tesoreria_global.exportar_pagos_nit_y_periodo(?,?::date,?::date)",
-                fileName("PAGOS_NIT_" + safe(nit), fini, ffin, "PAGOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
-                nit, nullIfBlank(fini), nullIfBlank(ffin));
+                fileName("PAGOS_NIT_" + safe(nit), fini, ffin, "PAGOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(effectiveFini) + "_A_" + safe(effectiveFfin)),
+                nit, effectiveFini, effectiveFfin);
     }
 
     public DownloadResponse descargarTesoreriaNitCuenta(String nit, String cta) {
@@ -64,10 +66,12 @@ public class ReportExportService {
     }
 
     public DownloadResponse descargarCartera(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
+        String effectiveFini = defaultFini(fini);
+        String effectiveFfin = defaultFfin(ffin);
         return exportFromFunction(
                 "SELECT * FROM tesoreria_global.tesoreria_cartera(?,?,?,?,?::date,?::date)",
-                fileName("CARTERA_NIT_" + safe(nit), fini, ffin, "CARTERA_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
-                nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
+                fileName("CARTERA_NIT_" + safe(nit), fini, ffin, "CARTERA_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(effectiveFini) + "_A_" + safe(effectiveFfin)),
+                nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), effectiveFini, effectiveFfin);
     }
 
     public DownloadResponse descargarCarteraRadicados(String txtidrad) {
@@ -78,10 +82,12 @@ public class ReportExportService {
     }
 
     public DownloadResponse descargarCarteraNitPeriodo(String nit, String fini, String ffin) {
+        String effectiveFini = defaultFini(fini);
+        String effectiveFfin = defaultFfin(ffin);
         return exportFromFunction(
                 "SELECT * FROM tesoreria_global.exportar_cartera_nit_periodo(?,?::date,?::date)",
-                fileName("CARTERA_NIT_" + safe(nit), fini, ffin, "CARTERA_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
-                nit, nullIfBlank(fini), nullIfBlank(ffin));
+                fileName("CARTERA_NIT_" + safe(nit), fini, ffin, "CARTERA_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(effectiveFini) + "_A_" + safe(effectiveFfin)),
+                nit, effectiveFini, effectiveFfin);
     }
 
     public DownloadResponse descargarCarteraNitCuenta(String nit, String cta) {
@@ -92,10 +98,12 @@ public class ReportExportService {
     }
 
     public DownloadResponse descargarImpuestos(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
+        String effectiveFini = defaultFini(fini);
+        String effectiveFfin = defaultFfin(ffin);
         return exportFromFunction(
                 "SELECT * FROM tesoreria_global.tesoreria_pagos(?,?,?,?,?::date,?::date)",
-                fileName("IMPUESTOS_NIT_" + safe(nit), fini, ffin, "IMPUESTOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
-                nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
+                fileName("IMPUESTOS_NIT_" + safe(nit), fini, ffin, "IMPUESTOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(effectiveFini) + "_A_" + safe(effectiveFfin)),
+                nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), effectiveFini, effectiveFfin);
     }
 
     public DownloadResponse descargarImpuestosRadicados(String txtidrad) {
@@ -106,10 +114,12 @@ public class ReportExportService {
     }
 
     public DownloadResponse descargarImpuestosNitPeriodo(String nit, String fini, String ffin) {
+        String effectiveFini = defaultFini(fini);
+        String effectiveFfin = defaultFfin(ffin);
         return exportFromFunction(
                 "SELECT * FROM tesoreria_global.exportar_impuestos_nit_y_periodo(?,?::date,?::date)",
-                fileName("PAGOS_NIT_" + safe(nit), fini, ffin, "PAGOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
-                nit, nullIfBlank(fini), nullIfBlank(ffin));
+                fileName("PAGOS_NIT_" + safe(nit), fini, ffin, "PAGOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(effectiveFini) + "_A_" + safe(effectiveFfin)),
+                nit, effectiveFini, effectiveFfin);
     }
 
     public DownloadResponse descargarImpuestosNitCuenta(String nit, String cta) {
@@ -172,17 +182,21 @@ public class ReportExportService {
     }
 
     public DownloadResponse descargarCruce(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
+        String effectiveFini = defaultFini(fini);
+        String effectiveFfin = defaultFfin(ffin);
         return exportFromFunction(
                 "SELECT * FROM tesoreria_sac.consulta_cruce(?,?,?,?,?::date,?::date)",
                 today("CRUCE_NIT_" + safe(nit)),
-                nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
+                nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), effectiveFini, effectiveFfin);
     }
 
     public DownloadResponse descargarFepa(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
+        String effectiveFini = defaultFini(fini);
+        String effectiveFfin = defaultFfin(ffin);
         return exportFromFunction(
                 "SELECT * FROM tesoreria_sac.consulta_fepa(?,?,?,?,?::date,?::date)",
                 today("CRUCE_NIT_" + safe(nit)),
-                nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
+                nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), effectiveFini, effectiveFfin);
     }
 
     private DownloadResponse exportFromFunction(String sql, String fileName, Object... args) {
@@ -283,6 +297,14 @@ public class ReportExportService {
 
     private Object nullIfBlank(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    private String defaultFini(String fini) {
+        return (fini == null || fini.isBlank()) ? "2014-01-01" : fini.trim();
+    }
+
+    private String defaultFfin(String ffin) {
+        return (ffin == null || ffin.isBlank()) ? LocalDate.now().format(DATE) : ffin.trim();
     }
 
     private String arrayLiteral(String value) {
