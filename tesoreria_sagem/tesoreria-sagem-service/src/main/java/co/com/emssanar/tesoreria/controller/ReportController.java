@@ -18,7 +18,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestController
 @RequestMapping("/api/sagem/reportes")
-// @CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*")
 public class ReportController {
 
     private final ReportExportService reportExportService;
@@ -34,8 +34,12 @@ public class ReportController {
             @RequestParam(required = false) String txtidrad,
             @RequestParam(required = false) String txtdocto,
             @RequestParam(required = false) String fini,
-            @RequestParam(required = false) String ffin) {
-        return csv(reportExportService.descargarTesoreria(txtnit, txtctacobro, txtidrad, txtdocto, fini, ffin));
+            @RequestParam(required = false) String txtfini,
+            @RequestParam(required = false) String ffin,
+            @RequestParam(required = false) String txtffin) {
+        String fIni = firstNonBlank(txtfini, fini);
+        String fFin = firstNonBlank(txtffin, ffin);
+        return csv(reportExportService.descargarTesoreria(txtnit, txtctacobro, txtidrad, txtdocto, fIni, fFin));
     }
 
     @PostMapping(value = "/tesoreria/radicados", produces = "text/csv")
@@ -47,8 +51,12 @@ public class ReportController {
     public ResponseEntity<byte[]> descargarTesoreriaNitPeriodo(
             @RequestParam(required = false) String txtnit,
             @RequestParam(required = false) String txtfini,
-            @RequestParam(required = false) String txtffin) {
-        return csv(reportExportService.descargarTesoreriaNitPeriodo(txtnit, txtfini, txtffin));
+            @RequestParam(required = false) String fini,
+            @RequestParam(required = false) String txtffin,
+            @RequestParam(required = false) String ffin) {
+        String fIni = firstNonBlank(txtfini, fini);
+        String fFin = firstNonBlank(txtffin, ffin);
+        return csv(reportExportService.descargarTesoreriaNitPeriodo(txtnit, fIni, fFin));
     }
 
     @PostMapping(value = "/tesoreria/nit-cuenta-cobro", produces = "text/csv")
@@ -78,8 +86,12 @@ public class ReportController {
             @RequestParam(required = false) String txtidrad,
             @RequestParam(required = false) String txtdocto,
             @RequestParam(required = false) String fini,
-            @RequestParam(required = false) String ffin) {
-        return csv(reportExportService.descargarCartera(txtnit, txtctacobro, txtidrad, txtdocto, fini, ffin));
+            @RequestParam(required = false) String txtfini,
+            @RequestParam(required = false) String ffin,
+            @RequestParam(required = false) String txtffin) {
+        String fIni = firstNonBlank(txtfini, fini);
+        String fFin = firstNonBlank(txtffin, ffin);
+        return csv(reportExportService.descargarCartera(txtnit, txtctacobro, txtidrad, txtdocto, fIni, fFin));
     }
 
     @PostMapping(value = "/cartera/radicados", produces = "text/csv")
@@ -91,8 +103,12 @@ public class ReportController {
     public ResponseEntity<byte[]> descargarCarteraNitPeriodo(
             @RequestParam(required = false) String txtnit,
             @RequestParam(required = false) String txtfini,
-            @RequestParam(required = false) String txtffin) {
-        return csv(reportExportService.descargarCarteraNitPeriodo(txtnit, txtfini, txtffin));
+            @RequestParam(required = false) String fini,
+            @RequestParam(required = false) String txtffin,
+            @RequestParam(required = false) String ffin) {
+        String fIni = firstNonBlank(txtfini, fini);
+        String fFin = firstNonBlank(txtffin, ffin);
+        return csv(reportExportService.descargarCarteraNitPeriodo(txtnit, fIni, fFin));
     }
 
     @PostMapping(value = "/cartera/nit-cuenta-cobro", produces = "text/csv")
@@ -115,8 +131,12 @@ public class ReportController {
             @RequestParam(required = false) String txtidrad,
             @RequestParam(required = false) String txtdocto,
             @RequestParam(required = false) String fini,
-            @RequestParam(required = false) String ffin) {
-        return csv(reportExportService.descargarImpuestos(txtnit, txtctacobro, txtidrad, txtdocto, fini, ffin));
+            @RequestParam(required = false) String txtfini,
+            @RequestParam(required = false) String ffin,
+            @RequestParam(required = false) String txtffin) {
+        String fIni = firstNonBlank(txtfini, fini);
+        String fFin = firstNonBlank(txtffin, ffin);
+        return csv(reportExportService.descargarImpuestos(txtnit, txtctacobro, txtidrad, txtdocto, fIni, fFin));
     }
 
     @PostMapping(value = "/impuestos/radicados", produces = "text/csv")
@@ -128,8 +148,12 @@ public class ReportController {
     public ResponseEntity<byte[]> descargarImpuestosNitPeriodo(
             @RequestParam(required = false) String txtnit,
             @RequestParam(required = false) String txtfini,
-            @RequestParam(required = false) String txtffin) {
-        return csv(reportExportService.descargarImpuestosNitPeriodo(txtnit, txtfini, txtffin));
+            @RequestParam(required = false) String fini,
+            @RequestParam(required = false) String txtffin,
+            @RequestParam(required = false) String ffin) {
+        String fIni = firstNonBlank(txtfini, fini);
+        String fFin = firstNonBlank(txtffin, ffin);
+        return csv(reportExportService.descargarImpuestosNitPeriodo(txtnit, fIni, fFin));
     }
 
     @PostMapping(value = "/impuestos/nit-cuenta-cobro", produces = "text/csv")
@@ -192,8 +216,12 @@ public class ReportController {
             @RequestParam(required = false) String txtidrad,
             @RequestParam(required = false) String txtdocto,
             @RequestParam(required = false) String fini,
-            @RequestParam(required = false) String ffin) {
-        return csv(reportExportService.descargarCruce(txtnit, txtctacobro, txtidrad, txtdocto, fini, ffin));
+            @RequestParam(required = false) String txtfini,
+            @RequestParam(required = false) String ffin,
+            @RequestParam(required = false) String txtffin) {
+        String fIni = firstNonBlank(txtfini, fini);
+        String fFin = firstNonBlank(txtffin, ffin);
+        return csv(reportExportService.descargarCruce(txtnit, txtctacobro, txtidrad, txtdocto, fIni, fFin));
     }
 
     @PostMapping(value = "/fepa", produces = "text/csv")
@@ -203,8 +231,12 @@ public class ReportController {
             @RequestParam(required = false) String txtidrad,
             @RequestParam(required = false) String txtdocto,
             @RequestParam(required = false) String fini,
-            @RequestParam(required = false) String ffin) {
-        return csv(reportExportService.descargarFepa(txtnit, txtctacobro, txtidrad, txtdocto, fini, ffin));
+            @RequestParam(required = false) String txtfini,
+            @RequestParam(required = false) String ffin,
+            @RequestParam(required = false) String txtffin) {
+        String fIni = firstNonBlank(txtfini, fini);
+        String fFin = firstNonBlank(txtffin, ffin);
+        return csv(reportExportService.descargarFepa(txtnit, txtctacobro, txtidrad, txtdocto, fIni, fFin));
     }
 
     private ResponseEntity<byte[]> csv(DownloadResponse response) {

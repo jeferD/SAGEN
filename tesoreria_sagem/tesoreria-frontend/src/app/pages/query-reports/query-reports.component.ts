@@ -68,18 +68,26 @@ import { ReportApiService, ReportFilters } from '../../services/report-api.servi
                 placeholder="Nro. Factura">
             </div>
 
-            <!-- Periodo Field -->
+            <!-- Fecha Inicial (Desde) Field -->
             <div class="form-group" *ngIf="showPeriodoField()">
-              <label class="form-label">Periodo <span class="required">*</span></label>
-              <select class="form-control" name="txtperiodo" [(ngModel)]="filters.periodo" required>
-                <option value="" disabled selected>Seleccione Periodo</option>
-                <option value="2025-12">Diciembre 2025</option>
-                <option value="2026-01">Enero 2026</option>
-                <option value="2026-02">Febrero 2026</option>
-                <option value="2026-03">Marzo 2026</option>
-                <option value="2026-04">Abril 2026</option>
-                <option value="2026-05">Mayo 2026</option>
-              </select>
+              <label class="form-label">Fecha Inicial (Desde) <span *ngIf="isPeriodoRequired()" class="required">*</span></label>
+              <input 
+                type="date" 
+                class="form-control" 
+                name="txtfini" 
+                [(ngModel)]="filters.fechaInicio" 
+                [required]="isPeriodoRequired()">
+            </div>
+
+            <!-- Fecha Final (Hasta) Field -->
+            <div class="form-group" *ngIf="showPeriodoField()">
+              <label class="form-label">Fecha Final (Hasta) <span *ngIf="isPeriodoRequired()" class="required">*</span></label>
+              <input 
+                type="date" 
+                class="form-control" 
+                name="txtffin" 
+                [(ngModel)]="filters.fechaFin" 
+                [required]="isPeriodoRequired()">
             </div>
 
             <!-- Documento Pago Field -->
@@ -261,6 +269,7 @@ export class QueryReportsComponent implements OnInit {
   isRadicadoRequired = computed(() => true);
   showFacturaField = computed(() => this.type() === 'nit-factura');
   showPeriodoField = computed(() => this.type() === 'nit-periodo' || this.section() === 'circular030');
+  isPeriodoRequired = computed(() => this.type() === 'nit-periodo');
   showDocPagoField = computed(() => this.type() === 'nit-documento');
 
   // Fallback table columns

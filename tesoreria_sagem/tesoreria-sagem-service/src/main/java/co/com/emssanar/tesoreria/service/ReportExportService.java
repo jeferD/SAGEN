@@ -30,21 +30,21 @@ public class ReportExportService {
 
     public DownloadResponse descargarTesoreria(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_global.tesoreria_pagos(?,?,?,?,?,?)",
+                "SELECT * FROM tesoreria_global.tesoreria_pagos(?,?,?,?,?::date,?::date)",
                 fileName("PAGOS_NIT_" + safe(nit), fini, ffin, "PAGOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
                 nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
     }
 
     public DownloadResponse descargarTesoreriaRadicados(String txtidrad) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_global.    (?)",
+                "SELECT * FROM tesoreria_global.exportar_pagos_lista_de_radicados(?)",
                 today("PAGOS_POR_RADICADOS"),
                 arrayLiteral(txtidrad));
     }
 
     public DownloadResponse descargarTesoreriaNitPeriodo(String nit, String fini, String ffin) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_global.exportar_pagos_nit_y_periodo(?,?,?)",
+                "SELECT * FROM tesoreria_global.exportar_pagos_nit_y_periodo(?,?::date,?::date)",
                 fileName("PAGOS_NIT_" + safe(nit), fini, ffin, "PAGOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
                 nit, nullIfBlank(fini), nullIfBlank(ffin));
     }
@@ -65,7 +65,7 @@ public class ReportExportService {
 
     public DownloadResponse descargarCartera(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_global.tesoreria_cartera(?,?,?,?,?,?)",
+                "SELECT * FROM tesoreria_global.tesoreria_cartera(?,?,?,?,?::date,?::date)",
                 fileName("CARTERA_NIT_" + safe(nit), fini, ffin, "CARTERA_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
                 nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
     }
@@ -79,7 +79,7 @@ public class ReportExportService {
 
     public DownloadResponse descargarCarteraNitPeriodo(String nit, String fini, String ffin) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_global.exportar_cartera_nit_periodo(?,?,?)",
+                "SELECT * FROM tesoreria_global.exportar_cartera_nit_periodo(?,?::date,?::date)",
                 fileName("CARTERA_NIT_" + safe(nit), fini, ffin, "CARTERA_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
                 nit, nullIfBlank(fini), nullIfBlank(ffin));
     }
@@ -93,7 +93,7 @@ public class ReportExportService {
 
     public DownloadResponse descargarImpuestos(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_global.tesoreria_pagos(?,?,?,?,?,?)",
+                "SELECT * FROM tesoreria_global.tesoreria_pagos(?,?,?,?,?::date,?::date)",
                 fileName("IMPUESTOS_NIT_" + safe(nit), fini, ffin, "IMPUESTOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
                 nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
     }
@@ -107,7 +107,7 @@ public class ReportExportService {
 
     public DownloadResponse descargarImpuestosNitPeriodo(String nit, String fini, String ffin) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_global.exportar_impuestos_nit_y_periodo(?,?,?)",
+                "SELECT * FROM tesoreria_global.exportar_impuestos_nit_y_periodo(?,?::date,?::date)",
                 fileName("PAGOS_NIT_" + safe(nit), fini, ffin, "PAGOS_NIT_" + safe(nit), "PERIODO_ENTRE_" + safe(fini) + "_A_" + safe(ffin)),
                 nit, nullIfBlank(fini), nullIfBlank(ffin));
     }
@@ -173,25 +173,38 @@ public class ReportExportService {
 
     public DownloadResponse descargarCruce(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_sac.consulta_cruce(?,?,?,?,?,?)",
+                "SELECT * FROM tesoreria_sac.consulta_cruce(?,?,?,?,?::date,?::date)",
                 today("CRUCE_NIT_" + safe(nit)),
                 nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
     }
 
     public DownloadResponse descargarFepa(String nit, String ctacobro, String idrad, String docto, String fini, String ffin) {
         return exportFromFunction(
-                "SELECT * FROM tesoreria_sac.consulta_fepa(?,?,?,?,?,?)",
+                "SELECT * FROM tesoreria_sac.consulta_fepa(?,?,?,?,?::date,?::date)",
                 today("CRUCE_NIT_" + safe(nit)),
                 nit, nullIfBlank(ctacobro), nullIfBlank(idrad), nullIfBlank(docto), nullIfBlank(fini), nullIfBlank(ffin));
     }
 
     private DownloadResponse exportFromFunction(String sql, String fileName, Object... args) {
-        for (Object arg : args) {
-            if (arg == null) {
-                throw new IllegalArgumentException("Faltan parametros obligatorios para la consulta");
-            }
+        if (args == null || args.length == 0 || isBlank(args[0])) {
+            throw new IllegalArgumentException("Faltan parametros obligatorios para la consulta: el NIT es requerido");
         }
-        String generatedSql = jdbcTemplate.queryForObject(sql, String.class, args);
+        String generatedSql = jdbcTemplate.execute((Connection connection) -> {
+            try (var ps = connection.prepareStatement(sql)) {
+                for (int i = 0; i < args.length; i++) {
+                    ps.setObject(i + 1, args[i]);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString(1);
+                    }
+                    return null;
+                }
+            }
+        });
+        if (generatedSql == null || generatedSql.isBlank()) {
+            return new DownloadResponse(fileName, new byte[0]);
+        }
         return new DownloadResponse(fileName, executeSqlToCsv(generatedSql));
     }
 
@@ -304,5 +317,15 @@ public class ReportExportService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private boolean isBlank(Object value) {
+        if (value == null) {
+            return true;
+        }
+        if (value instanceof String s) {
+            return s.isBlank();
+        }
+        return false;
     }
 }

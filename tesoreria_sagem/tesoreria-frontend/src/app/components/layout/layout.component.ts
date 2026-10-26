@@ -109,7 +109,7 @@ interface MenuItem {
 
         <!-- Footer -->
         <footer class="app-footer">
-          <p>© 2026 Emssanar EPS - Departamento de Tesorería. Todos los derechos reservados.</p>
+          <p>© 2026 Emssanar EPS</p>
         </footer>
       </div>
     </div>
@@ -390,71 +390,71 @@ export class LayoutComponent {
 
     return [
       { label: 'Inicio', icon: 'bi bi-house-door', route: '/admin/inicio' },
-        { 
-          label: 'Recobros', 
-          icon: 'bi bi-shield-check', 
-          expanded: false,
-          subitems: [
-            { label: 'Nit + Cuenta Cobro', icon: 'bi bi-search', route: '/admin/recobros/nit-cuenta' },
-            { label: 'Nit + Factura', icon: 'bi bi-search', route: '/admin/recobros/nit-factura' },
-            { label: 'Número de Radicado', icon: 'bi bi-search', route: '/admin/recobros/radicado' }
-          ]
-        },
-        { 
-          label: 'Cartera', 
-          icon: 'bi bi-folder-check', 
-          expanded: false,
-          subitems: [
-            { label: 'Nit + Periodo', icon: 'bi bi-search', route: '/admin/cartera/nit-periodo' },
-            { label: 'Nit + Cuenta Cobro', icon: 'bi bi-search', route: '/admin/cartera/nit-cuenta' },
-            { label: 'Lista Radicados', icon: 'bi bi-search', route: '/admin/cartera/lista-radicados' }
-          ]
-        },
-        { 
-          label: 'Tesorería', 
-          icon: 'bi bi-cash-coin', 
-          expanded: false,
-          subitems: [
-            { label: 'Nit + Periodo', icon: 'bi bi-search', route: '/admin/tesoreria/nit-periodo' },
-            { label: 'Nit + Cuenta Cobro', icon: 'bi bi-search', route: '/admin/tesoreria/nit-cuenta' },
-            { label: 'Nit + Documento', icon: 'bi bi-search', route: '/admin/tesoreria/nit-documento' },
-            { label: 'Lista Radicados', icon: 'bi bi-search', route: '/admin/tesoreria/lista-radicados' }
-          ]
-        },
-        { 
-          label: 'Impuestos', 
-          icon: 'bi bi-receipt', 
-          expanded: false,
-          subitems: [
-            { label: 'Nit + Periodo', icon: 'bi bi-search', route: '/admin/impuestos/nit-periodo' },
-            { label: 'Nit + Cuenta Cobro', icon: 'bi bi-search', route: '/admin/impuestos/nit-cuenta' },
-            { label: 'Nit + Documento', icon: 'bi bi-search', route: '/admin/impuestos/nit-documento' },
-            { label: 'Lista Radicados', icon: 'bi bi-search', route: '/admin/impuestos/lista-radicados' }
-          ]
-        },
-        { 
-          label: 'Circular 030', 
-          icon: 'bi bi-file-earmark-bar-graph', 
-          expanded: false,
-          subitems: [
-            { label: 'Fepa', icon: 'bi bi-stats', route: '/admin/circular030/fepa' },
-            { label: 'Cruce', icon: 'bi bi-random', route: '/admin/circular030/cruce' }
-          ]
-        },
-        { 
-          label: 'Cubos', 
-          icon: 'bi bi-bar-chart-steps', 
-          route: '/admin/cubos'
-        },
-        { 
-          label: 'Emails Proveedores', 
-          icon: 'bi bi-envelope-at', 
-          route: '/admin/emails'
-        }
-      ];
+      {
+        label: 'Recobros',
+        icon: 'bi bi-shield-check',
+        expanded: false,
+        subitems: [
+          { label: 'Nit + Cuenta Cobro', icon: 'bi bi-search', route: '/admin/recobros/nit-cuenta' },
+          { label: 'Nit + Factura', icon: 'bi bi-search', route: '/admin/recobros/nit-factura' },
+          { label: 'Número de Radicado', icon: 'bi bi-search', route: '/admin/recobros/radicado' }
+        ]
+      },
+      {
+        label: 'Cartera',
+        icon: 'bi bi-folder-check',
+        expanded: false,
+        subitems: [
+          { label: 'Nit + Periodo', icon: 'bi bi-search', route: '/admin/cartera/nit-periodo' },
+          { label: 'Nit + Cuenta Cobro', icon: 'bi bi-search', route: '/admin/cartera/nit-cuenta' },
+          { label: 'Lista Radicados', icon: 'bi bi-search', route: '/admin/cartera/lista-radicados' }
+        ]
+      },
+      {
+        label: 'Tesorería',
+        icon: 'bi bi-cash-coin',
+        expanded: false,
+        subitems: [
+          { label: 'Nit + Periodo', icon: 'bi bi-search', route: '/admin/tesoreria/nit-periodo' },
+          { label: 'Nit + Cuenta Cobro', icon: 'bi bi-search', route: '/admin/tesoreria/nit-cuenta' },
+          { label: 'Nit + Documento', icon: 'bi bi-search', route: '/admin/tesoreria/nit-documento' },
+          { label: 'Lista Radicados', icon: 'bi bi-search', route: '/admin/tesoreria/lista-radicados' }
+        ]
+      },
+      {
+        label: 'Impuestos',
+        icon: 'bi bi-receipt',
+        expanded: false,
+        subitems: [
+          { label: 'Nit + Periodo', icon: 'bi bi-search', route: '/admin/impuestos/nit-periodo' },
+          { label: 'Nit + Cuenta Cobro', icon: 'bi bi-search', route: '/admin/impuestos/nit-cuenta' },
+          { label: 'Nit + Documento', icon: 'bi bi-search', route: '/admin/impuestos/nit-documento' },
+          { label: 'Lista Radicados', icon: 'bi bi-search', route: '/admin/impuestos/lista-radicados' }
+        ]
+      },
+      {
+        label: 'Circular 030',
+        icon: 'bi bi-file-earmark-bar-graph',
+        expanded: false,
+        subitems: [
+          { label: 'Fepa', icon: 'bi bi-stats', route: '/admin/circular030/fepa' },
+          { label: 'Cruce', icon: 'bi bi-random', route: '/admin/circular030/cruce' }
+        ]
+      },
+      {
+        label: 'Cubos',
+        icon: 'bi bi-bar-chart-steps',
+        route: '/admin/cubos'
+      },
+      {
+        label: 'Emails Proveedores',
+        icon: 'bi bi-envelope-at',
+        route: '/admin/emails'
+      }
+    ];
   });
 
-  constructor() {}
+  constructor() { }
 
   toggleSidebar(): void {
     this.isCollapsed.set(!this.isCollapsed());

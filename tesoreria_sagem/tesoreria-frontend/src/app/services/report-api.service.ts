@@ -69,7 +69,11 @@ export class ReportApiService {
 
     if (section === 'impuestos') {
       if (type === 'lista-radicados') return `${today}_IMPUESTOS_POR_RADICADOS.csv`;
-      if (type === 'nit-periodo') return `${today}_PAGOS_NIT_${this.clean(filters.nit)}.csv`;
+      if (type === 'nit-periodo') {
+        return this.isBlank(filters.fechaInicio) || this.isBlank(filters.fechaFin)
+          ? `${today}_PAGOS_NIT_${this.clean(filters.nit)}.csv`
+          : `${today}_PAGOS_NIT_${this.clean(filters.nit)}_PERIODO_ENTRE_${this.clean(filters.fechaInicio)}_A_${this.clean(filters.fechaFin)}.csv`;
+      }
       if (type === 'nit-documento') return `${today}_IMPUESTOS_NIT_${this.clean(filters.nit)}_NUMERO_DOCUMENTO_IMPUESTO_${this.clean(filters.documentoPago)}.csv`;
       return `${today}_PAGOS_NIT_${this.clean(filters.nit)}_NUMERO_CUENTA_COBRO_${this.clean(filters.cuentaCobro)}.csv`;
     }
@@ -114,6 +118,14 @@ export class ReportApiService {
       if (value !== undefined && value !== null && value !== '') {
         params = params.set(this.toParamKey(key), value);
       }
+    }
+    if (filters.fechaInicio) {
+      params = params.set('txtfini', filters.fechaInicio);
+      params = params.set('fini', filters.fechaInicio);
+    }
+    if (filters.fechaFin) {
+      params = params.set('txtffin', filters.fechaFin);
+      params = params.set('ffin', filters.fechaFin);
     }
     return params;
   }

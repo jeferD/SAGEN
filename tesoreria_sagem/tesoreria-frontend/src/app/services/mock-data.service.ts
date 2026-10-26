@@ -418,6 +418,8 @@ export class MockDataService {
     factura?: string;
     periodo?: string;
     documentoPago?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
   }): FacturaRecord[] {
     return this.queryDb.filter(row => {
       // Base filters
@@ -427,6 +429,9 @@ export class MockDataService {
       if (filters.factura && row.idfactura !== filters.factura.trim()) return false;
       if (filters.periodo && row.periodo !== filters.periodo.trim()) return false;
       if (filters.documentoPago && row.documento_pago !== filters.documentoPago.trim()) return false;
+      const rowFecha = row.fecha_radicacion || row.fecha_expedicion || row.fecha_pago || (row.periodo ? `${row.periodo}-01` : '');
+      if (filters.fechaInicio && rowFecha && rowFecha < filters.fechaInicio) return false;
+      if (filters.fechaFin && rowFecha && rowFecha > filters.fechaFin) return false;
       return true;
     });
   }
