@@ -13,8 +13,8 @@ export const getApiBaseUrl = (): string => {
   if (typeof window !== 'undefined') {
     // Si se corre en desarrollo local directo en localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:9163/api/sagem/reportes';
-      // return 'http://192.168.125.37:9163/api/sagem/reportes';
+      // return 'http://localhost:9163/api/sagem/reportes';
+      return 'http://192.168.125.37:9163/api/sagem/reportes';
     }
   }
   // En producción (a través del reverse proxy Nginx para evitar CORS y Mixed-Content)

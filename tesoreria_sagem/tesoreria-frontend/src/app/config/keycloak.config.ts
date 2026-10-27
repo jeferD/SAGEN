@@ -7,5 +7,5 @@ export interface KeycloakConfig {
 export const KEYCLOAK_CONFIG: KeycloakConfig = {
   url: 'https://auth.emssanareps.co:8443/',
   realm: 'sagas',
-  clientId: 'gestor-mesa-ayuda'
+  clientId: 'tesoreria-sagem'
 };

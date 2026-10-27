@@ -87,6 +87,12 @@ import { AuthService } from '../../services/auth.service';
             <p>Consulta pagos emitidos por NIT y documento de egreso</p>
           </a>
 
+          <a routerLink="/admin/impuestos/nit-periodo" class="shortcut-item">
+            <i class="bi bi-receipt icon"></i>
+            <h4>Impuestos</h4>
+            <p>Consulta retenciones e impuestos por NIT y periodo</p>
+          </a>
+
           <a routerLink="/admin/emails" class="shortcut-item">
             <i class="bi bi-envelope-at icon"></i>
             <h4>Emails Proveedores</h4>

@@ -119,14 +119,15 @@ export class ReportApiService {
         params = params.set(this.toParamKey(key), value);
       }
     }
-    if (filters.fechaInicio) {
-      params = params.set('txtfini', filters.fechaInicio);
-      params = params.set('fini', filters.fechaInicio);
-    }
-    if (filters.fechaFin) {
-      params = params.set('txtffin', filters.fechaFin);
-      params = params.set('ffin', filters.fechaFin);
-    }
+    // Si no mandan fechas, tomar por defecto desde 2014-01-01 hasta hoy
+    const todayStr = new Date().toISOString().split('T')[0];
+    const fini = (filters.fechaInicio && filters.fechaInicio.trim() !== '') ? filters.fechaInicio.trim() : '2014-01-01';
+    const ffin = (filters.fechaFin && filters.fechaFin.trim() !== '') ? filters.fechaFin.trim() : todayStr;
+
+    params = params.set('txtfini', fini);
+    params = params.set('fini', fini);
+    params = params.set('txtffin', ffin);
+    params = params.set('ffin', ffin);
     return params;
   }
 

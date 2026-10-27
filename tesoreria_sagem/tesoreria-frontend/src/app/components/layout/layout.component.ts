@@ -442,11 +442,6 @@ export class LayoutComponent {
         ]
       },
       {
-        label: 'Cubos',
-        icon: 'bi bi-bar-chart-steps',
-        route: '/admin/cubos'
-      },
-      {
         label: 'Emails Proveedores',
         icon: 'bi bi-envelope-at',
         route: '/admin/emails'
